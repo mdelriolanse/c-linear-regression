@@ -21,7 +21,8 @@ typedef struct {
 
 typedef struct {
 	float mse;
-	float sse;
+	float sum_err;
+	float weighted_err;
 }TrainingDiagnostics, *pTrainingDiagnostics;
 
 //function declarations
@@ -66,7 +67,9 @@ pRegressionParameters initialize_params() {
 
 void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics *diagnostics) {
 	float y_hat;
-	float sse; // sum squared error
+	float err;
+	float sum_err; // sum error
+	float weighted_err; // weighted - multipled by sample.
 	float mse; 
 	
 	float *weights = params->weights;
@@ -75,31 +78,40 @@ void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagn
 	float *samples = data->samples;
 	float *labels = data->labels;
 
-	for (int i = 0; i < data->length; i++) {
-		y_hat = samples[i] * weights[i];
-		sse += (labels[i] - y_hat) * (labels[i] - y_hat);
+	for (int j = 0; j < NUM_FEATURES; j++) {
+		for (int i = 0; i < data->length; i++) {
+			y_hat = samples[i] * weights[j] + bias; // samples[j][i] * weights[j] , where j is 
+								// the number of features
+			err = (labels[i] - y_hat);
+			sum_err += err * err;
+			weighted_err += err * samples[i];
+			// going to need to clear in multivariate case
+		}
 	}
 
-	mse = sse / data->length;
+	mse = sum_err / data->length;
 
-	(*diagnostics)->sse = sse;
+	(*diagnostics)->sum_err = sum_err;
+	(*diagnostics)->weighted_err = weighted_err;
 	(*diagnostics)->mse = mse;
 }	
 
 void backward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics *diagnostics) {
-	// update bias
-	float bias_grad = 2.0/data->length * ((*diagnostics)->sse);
-	params->bias -= LEARNING_RATE * bias_grad;
 
-	for (int i = 0; i < data->length; i++) {
-		float weight_grad = data->samples[i] * bias_grad;
-		params->weights[i] -= LEARNING_RATE * weight_grad; 
+	for (int j = 0; j < NUM_FEATURES; j++) {
+		float weight_grad = 2.0/data->length * ((*diagnostics)->weighted_err);
+		params->weights[j] -= LEARNING_RATE * weight_grad; 
 	}
+
+	// update bias
+	float bias_grad = 2.0/data->length * ((*diagnostics)->sum_err);
+	params->bias -= LEARNING_RATE * bias_grad;
 }
 
 void clear_diagnostics(pTrainingDiagnostics *diagnostics) {
 	(*diagnostics)->mse = 0;
-	(*diagnostics)->sse = 0;
+	(*diagnostics)->weighted_err = 0;
+	(*diagnostics)->sum_err = 0;
 }
 
 void train_linreg(pDataLoader data, size_t epochs) {
