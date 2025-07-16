@@ -27,13 +27,13 @@ typedef struct {
 
 //function declarations
 pRegressionParameters initialize_params();
-void train_linreg(pDataLoader data, size_t epochs);
+void train(pDataLoader data, size_t epochs);
 void validate_initialization(); // check that weights are same size as features -- not necessary anymore.
 			       // num samples == num labels
-void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics *diagnostics);
-void backward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics *diagnostics);
+void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics diagnostics);
+void backward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics diagnostics);
 
-int main() {
+int main(int argc, char **argv) {
 	float x[] = {1, 2, 3, 4, 5};
 	float y[] = {3, 5, 7, 9, 11};
 
@@ -41,8 +41,13 @@ int main() {
 	data_loader->samples = x;
 	data_loader->labels = y;
 	data_loader->length = 5;
+	int num_epochs = strtol(argv[1], NULL, 10);
 
-	train_linreg(data_loader, 5);
+	if (num_epochs == LONG_MIN) || (num_epochs == LONG_MAX) {
+		fprintf(stderr, "Inputted epoch no. invalid");
+	}
+
+	train(data_loader, num_epochs);
 
 	return EXIT_SUCCESS;
 }
@@ -71,11 +76,12 @@ pRegressionParameters initialize_params() {
 	return params;
 }
 
-void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics *diagnostics) {
-	float y_hat;
-	float err;
-	float sum_err; // sum error
-	float weighted_err; // weighted - multipled by sample.
+void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics diagnostics) {
+	float y_hat = 0;
+	float err = 0;
+	float sum_err = 0; // sum error
+	float squared_err = 0;
+	float weighted_err = 0; // weighted - multipled by sample.
 	float mse; 
 	
 	float *weights = params->weights;
@@ -88,14 +94,15 @@ void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagn
 		for (int i = 0; i < data->length; i++) {
 			y_hat = samples[i] * weights[j] + bias; // samples[j][i] * weights[j] , where j is 
 								// the number of features
-			err = (labels[i] - y_hat);
-			sum_err += err * err;
+			err = (y_hat - labels[i]);
+			squared_err += err * err;
+			sum_err += err;
 			weighted_err += err * samples[i];
 			// going to need to clear in multivariate case
 		}
 	}
 
-	mse = sum_err / data->length;
+	mse = squared_err / data->length;
 
 	diagnostics->sum_err = sum_err;
 	diagnostics->weighted_err = weighted_err;
@@ -120,16 +127,22 @@ void clear_diagnostics(pTrainingDiagnostics diagnostics) {
 	diagnostics->sum_err = 0;
 }
 
-void train_linreg(pDataLoader data, size_t epochs) {
+void train(pDataLoader data, size_t epochs) {
 	pRegressionParameters params = initialize_params();
 	pTrainingDiagnostics diagnostics = calloc(1, sizeof(TrainingDiagnostics));
 
 	for (int i = 0; i < epochs; i++) {
 		forward_pass(data, params, diagnostics);
 		backward_pass(data, params, diagnostics);
-		printf("epoch: %i - mse: %f\n", i, diagnostics->mse);
-		clear_diagnostics(&diagnostics);
+		printf("epoch: %i - mse: %e\n", i+1, diagnostics->mse);
+		printf("weight: %e - bias: %e\n", params->weights[0], params->bias);
+		clear_diagnostics(diagnostics);
 	}
+
+	free(params->weights);
+	free(params);
+	free(diagnostics);
+	free(data);
 
 }
 
