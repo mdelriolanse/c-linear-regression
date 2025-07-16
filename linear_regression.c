@@ -52,6 +52,12 @@ pRegressionParameters initialize_params() {
 	// bias is one term irrespective of features.
 	// no need to init using calloc.
 	pRegressionParameters params = malloc(sizeof(RegressionParameters));
+
+	if (!params) {
+		fprintf(stderr, "parameters (w and b) memory allocation failed\n");
+		exit(EXIT_FAILURE);
+	}
+
 	float *weights_block = (float *)calloc(NUM_FEATURES, sizeof(float));
 
 	if (!weights_block) {
@@ -91,36 +97,36 @@ void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagn
 
 	mse = sum_err / data->length;
 
-	(*diagnostics)->sum_err = sum_err;
-	(*diagnostics)->weighted_err = weighted_err;
-	(*diagnostics)->mse = mse;
+	diagnostics->sum_err = sum_err;
+	diagnostics->weighted_err = weighted_err;
+	diagnostics->mse = mse;
 }	
 
-void backward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics *diagnostics) {
+void backward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics diagnostics) {
 
 	for (int j = 0; j < NUM_FEATURES; j++) {
-		float weight_grad = 2.0/data->length * ((*diagnostics)->weighted_err);
+		float weight_grad = 2.0/data->length * (diagnostics->weighted_err);
 		params->weights[j] -= LEARNING_RATE * weight_grad; 
 	}
 
 	// update bias
-	float bias_grad = 2.0/data->length * ((*diagnostics)->sum_err);
+	float bias_grad = 2.0/data->length * (diagnostics->sum_err);
 	params->bias -= LEARNING_RATE * bias_grad;
 }
 
-void clear_diagnostics(pTrainingDiagnostics *diagnostics) {
-	(*diagnostics)->mse = 0;
-	(*diagnostics)->weighted_err = 0;
-	(*diagnostics)->sum_err = 0;
+void clear_diagnostics(pTrainingDiagnostics diagnostics) {
+	diagnostics->mse = 0;
+	diagnostics->weighted_err = 0;
+	diagnostics->sum_err = 0;
 }
 
 void train_linreg(pDataLoader data, size_t epochs) {
 	pRegressionParameters params = initialize_params();
-	pTrainingDiagnostics diagnostics = malloc(sizeof(TrainingDiagnostics));
+	pTrainingDiagnostics diagnostics = calloc(1, sizeof(TrainingDiagnostics));
 
 	for (int i = 0; i < epochs; i++) {
-		forward_pass(data, params, &diagnostics);
-		backward_pass(data, params, &diagnostics);
+		forward_pass(data, params, diagnostics);
+		backward_pass(data, params, diagnostics);
 		printf("epoch: %i - mse: %f\n", i, diagnostics->mse);
 		clear_diagnostics(&diagnostics);
 	}
