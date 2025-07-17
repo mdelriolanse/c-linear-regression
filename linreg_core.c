@@ -1,6 +1,7 @@
-#include "linreg_utils.h"
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "linreg_utils.h"
 
 pRegressionParameters initialize_params() {
 
@@ -75,6 +76,16 @@ void clear_diagnostics(pTrainingDiagnostics diagnostics) {
 	diagnostics->mse = 0;
 	diagnostics->weighted_err = 0;
 	diagnostics->sum_err = 0;
+}
+
+void initialize_dataloader(pDataLoader dataloader, size_t num_samples, size_t num_features) {
+
+	assert(num_samples < MAX_SAMPLES);
+	assert(num_features < MAX_FEATURES);
+
+	dataloader->samples = malloc(num_features * num_samples * sizeof(float));
+	dataloader->labels = malloc(num_features * num_samples * sizeof(float));
+	dataloader->length = num_samples;
 }
 
 void train(pDataLoader data, size_t epochs) {
