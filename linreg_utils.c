@@ -1,56 +1,6 @@
-#include <stddef.h>
-#include <stdio.h>
+#include "linreg_utils.h"
 #include <stdlib.h>
-
-#define EXIT_SUCCESS 0
-#define EXIT_FAILURE 1
-#define NUM_FEATURES 1
-#define LEARNING_RATE 0.01
-
-//struct declarations
-typedef struct {
-	float *weights;
-	float bias;
-}RegressionParameters, *pRegressionParameters;
-
-typedef struct {
-	float *samples;
-	float *labels;
-	size_t length;
-}DataLoader, *pDataLoader;
-
-typedef struct {
-	float mse;
-	float sum_err;
-	float weighted_err;
-}TrainingDiagnostics, *pTrainingDiagnostics;
-
-//function declarations
-pRegressionParameters initialize_params();
-void train(pDataLoader data, size_t epochs);
-void validate_initialization(); // check that weights are same size as features -- not necessary anymore.
-			       // num samples == num labels
-void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics diagnostics);
-void backward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics diagnostics);
-
-int main(int argc, char **argv) {
-	float x[] = {1, 2, 3, 4, 5};
-	float y[] = {3, 5, 7, 9, 11};
-
-	pDataLoader data_loader = malloc(sizeof(DataLoader));
-	data_loader->samples = x;
-	data_loader->labels = y;
-	data_loader->length = 5;
-	int num_epochs = strtol(argv[1], NULL, 10);
-
-	if (num_epochs == LONG_MIN) || (num_epochs == LONG_MAX) {
-		fprintf(stderr, "Inputted epoch no. invalid");
-	}
-
-	train(data_loader, num_epochs);
-
-	return EXIT_SUCCESS;
-}
+#include <stdio.h>
 
 pRegressionParameters initialize_params() {
 
@@ -145,5 +95,3 @@ void train(pDataLoader data, size_t epochs) {
 	free(data);
 
 }
-
-// g
