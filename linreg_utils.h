@@ -11,6 +11,7 @@
 #define MIN_EPOCHS 1
 #define MAX_SAMPLES 1000
 #define MAX_FEATURES 10 // for now only one really.
+#define PATH_BUF_LEN 256
 
 //STRUCT DECLARATIONS
 typedef struct {
@@ -34,11 +35,12 @@ typedef struct {
 
 //initializations
 pRegressionParameters initialize_params();
-void initialize_dataloader(pDataLoader dataloader, size_t num_samples, size_t num_features);
+int initialize_dataloader(pDataLoader dataloader, size_t num_samples, size_t num_features);
 
 //validations
 void validate_initialization(); // check num_features = num_labels
-void validate_epochs(char *nepochs);
+size_t validate_epochs(char *nepochs);
+void validate_path(char *path, char **argv);
 
 //training
 void train(pDataLoader data, size_t epochs);
@@ -46,6 +48,6 @@ void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagn
 void backward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics diagnostics);
 
 //csv parser
-void csv_parser(char *path, pDataLoader dataloader, size_t nsamples, size_t nfeatures);
+int csv_parser(char *path, pDataLoader dataloader, size_t nsamples, size_t nfeatures);
 
 #endif

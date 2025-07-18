@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,23 +8,28 @@
 #define INPUT_FEATURE_INDEX 0
 #define OUTPUT_FEATURE_INDEX 1
 
-void csv_parser(char *path, pDataLoader dataloader,
+int csv_parser(char *path, pDataLoader dataloader,
 		size_t nsamples, size_t nfeatures) {
 
 	FILE *file;
+	printf("About to read file");
 	file = fopen(path, "r");
 	char buffer[10];
 
 	initialize_dataloader(dataloader, nsamples, nfeatures);
 
 	int sample_idx = 0;
+	float output;
+	float input;
 
 	while (fgets(buffer, 10, file)) {
 		char *input_str = strtok(buffer, ","); // x datapt.
-		float input = atof(input_str);
-		
 		char *output_str = strtok(NULL, ",");
-		float output = atof(output_str);
+		
+		if ((input_str != NULL) && (output_str != NULL)) {
+			output = atof(output_str);
+			input = atof(input_str);
+		}
 
 		// load data into buffer
 		// mechanism will need to be
@@ -33,20 +39,24 @@ void csv_parser(char *path, pDataLoader dataloader,
 
 		sample_idx++;
 	}
+
+	return EXIT_SUCCESS;
 }
 
-void validate_epochs(char *nepochs) {
-	int num_epochs;
+size_t validate_epochs(char *nepochs) {
+	size_t num_epochs = (size_t) atoi(nepochs);
 
 	if ((num_epochs >= MIN_EPOCHS) && (num_epochs <= MAX_EPOCHS)) {
-		printf("Initializing %d epochs\n", num_epochs);
+		printf("Initializing %zu epochs\n", num_epochs);
 	} else {
 		fprintf(stderr, "Inputted epoch no. invalid\n");
 		exit(EXIT_FAILURE);
 	}
+
+	return num_epochs;
 }
 
-char *validate_path(char *path, char **argv) {
+void validate_path(char *path, char **argv) {
 
 	char *cp;
 
@@ -56,11 +66,9 @@ char *validate_path(char *path, char **argv) {
 		exit(1);
 	}
 
-	if (!strncpy(path, argv[1], sizeof(*path))) {
+	if (!strncpy(path, argv[2], PATH_BUF_LEN)) {
 		printf("Path validation failed\n");
 	}
 
-	puts(path);
-
-	return path;
+	printf("%s\n", path);
 }
