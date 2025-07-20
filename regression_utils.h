@@ -6,7 +6,7 @@
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 #define NUM_FEATURES 1
-#define LEARNING_RATE 0.01
+#define LEARNING_RATE 0.1
 #define MAX_EPOCHS 2500
 #define MIN_EPOCHS 1
 #define MAX_SAMPLES 1000
@@ -40,7 +40,7 @@ int initialize_dataloader(pDataLoader dataloader, size_t num_samples, size_t num
 //validations
 void validate_initialization(); // check num_features = num_labels
 size_t validate_epochs(char *nepochs);
-void validate_path(char *path, char **argv);
+void validate_path(char *buffer, char *path);
 
 //training
 void train(pDataLoader data, size_t epochs);

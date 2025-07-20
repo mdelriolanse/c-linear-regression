@@ -12,8 +12,13 @@ int csv_parser(char *path, pDataLoader dataloader,
 		size_t nsamples, size_t nfeatures) {
 
 	FILE *file;
-	printf("About to read file");
 	file = fopen(path, "r");
+
+	if (!file) {
+		fprintf(stderr, "Failed to open file at given path\n");
+		exit(EXIT_FAILURE);
+	}
+
 	char buffer[10];
 
 	initialize_dataloader(dataloader, nsamples, nfeatures);
@@ -56,19 +61,19 @@ size_t validate_epochs(char *nepochs) {
 	return num_epochs;
 }
 
-void validate_path(char *path, char **argv) {
+void validate_path(char *buffer, char *path) {
 
 	char *cp;
 
-	cp = *argv;
+	cp = path;
 	if (*cp == 0) {
 		fprintf(stderr,"main: argument an empty string\n");
 		exit(1);
 	}
 
-	if (!strncpy(path, argv[2], PATH_BUF_LEN)) {
+	if (!strncpy(buffer, path, PATH_BUF_LEN)) {
 		printf("Path validation failed\n");
 	}
 
-	printf("%s\n", path);
+	printf("%s\n", buffer);
 }
