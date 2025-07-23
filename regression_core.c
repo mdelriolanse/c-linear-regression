@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "linreg_utils.h"
+#include "regression_utils.h"
 
 pRegressionParameters initialize_params() {
 

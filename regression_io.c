@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "linreg_utils.h"
+#include "regression_utils.h"
 
 #define INPUT_FEATURE_INDEX 0
 #define OUTPUT_FEATURE_INDEX 1

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "linreg_utils.h"
+#include "regression_utils.h"
 
 int main(int argc, char **argv) {
 

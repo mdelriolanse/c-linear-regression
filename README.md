@@ -25,6 +25,10 @@ Clone the repository:
 git clone https://github.com/maticos-dev/c-linear-regression
 ```
 
+## Passing Data
+To use this program, the data must be formatted in a .csv file, where each row is structured as such:
+```bash x coordinate```, ```bash y coordinate```
+
 ## Execution:
 1. Compile:
    ```bash
@@ -33,4 +37,3 @@ git clone https://github.com/maticos-dev/c-linear-regression
 2. Execute
     ```bash
     ./main <number of epochs> <path to data>
-    
