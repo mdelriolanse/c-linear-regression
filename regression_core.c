@@ -9,17 +9,11 @@ pRegressionParameters initialize_params(size_t num_features) {
 	// no need to init using calloc.
 	pRegressionParameters params = malloc(sizeof(RegressionParameters));
 
-	if (!params) {
-		fprintf(stderr, "parameters (w and b) memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	if (!params) DIE("malloc RegressionParameters");
 
 	float *weights_block = (float *)calloc(num_features, sizeof(float));
 
-	if (!weights_block) {
-		fprintf(stderr, "weight memory allocation failed\n");
-		exit(EXIT_FAILURE);
-	}
+	if (!weights_block) DIE("calloc weights_block");
 
 	params->weights = weights_block;
 	params->bias = 0;
@@ -44,7 +38,7 @@ void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagn
 	for (size_t j = 0; j < num_features; j++) {
 		diagnostics->weighted_err[j] = 0.0f;
 	}
-
+ 
 	// For each sample
 	for (size_t i = 0; i < data->length; i++) {
 		// Compute prediction: y_hat = w1*x1 + w2*x2 + ... + wn*xn + bias
@@ -70,18 +64,18 @@ void forward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagn
 	diagnostics->mse = mse;
 }	
 
-void backward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics diagnostics) {
+void backward_pass(pDataLoader data, pRegressionParameters params, pTrainingDiagnostics diagnostics, float learning_rate) {
 	size_t num_features = data->num_features;
 
 	// Update weights for each feature
 	for (size_t j = 0; j < num_features; j++) {
 		float weight_grad = 2.0/data->length * (diagnostics->weighted_err[j]);
-		params->weights[j] -= LEARNING_RATE * weight_grad; 
+		params->weights[j] -= learning_rate * weight_grad; 
 	}
 
 	// Update bias
 	float bias_grad = 2.0/data->length * (diagnostics->sum_err);
-	params->bias -= LEARNING_RATE * bias_grad;
+	params->bias -= learning_rate * bias_grad;
 }
 
 void clear_diagnostics(pTrainingDiagnostics diagnostics, size_t num_features) {
@@ -92,33 +86,42 @@ void clear_diagnostics(pTrainingDiagnostics diagnostics, size_t num_features) {
 	}
 }
 
+int initialize_training_config(pTrainingConfig cfg, size_t epochs, float learning_rate) {
+
+	assert (cfg != NULL);
+	if (!cfg) DIE("null cfg");
+
+	assert(epochs < MAX_EPOCHS);
+	assert(learning_rate < MAX_LR);
+
+	// Allocate array of pointers for each feature
+	cfg->epochs = epochs;
+	cfg->learning_rate = learning_rate;
+
+	return EXIT_SUCCESS;
+}
+
 int initialize_dataloader(pDataLoader dataloader, size_t num_samples, size_t num_features) {
+
+	assert (dataloader != NULL);
+	if (!dataloader) DIE("null dataloader");
 
 	assert(num_samples < MAX_SAMPLES);
 	assert(num_features < MAX_FEATURES);
 
 	// Allocate array of pointers for each feature
 	dataloader->samples = malloc(num_features * sizeof(float*));
-	if (!dataloader->samples) {
-		fprintf(stderr, "Failed to allocate memory for samples array\n");
-		exit(EXIT_FAILURE);
-	}
+	if (!dataloader->samples) DIE("malloc feature pointers");
 
 	// Allocate memory for each feature's data
 	for (size_t i = 0; i < num_features; i++) {
 		dataloader->samples[i] = malloc(num_samples * sizeof(float));
-		if (!dataloader->samples[i]) {
-			fprintf(stderr, "Failed to allocate memory for feature %zu\n", i);
-			exit(EXIT_FAILURE);
-		}
+		if (!dataloader->samples[i]) DIE("malloc feature");
 	}
 
 	// Allocate memory for labels
 	dataloader->labels = malloc(num_samples * sizeof(float));
-	if (!dataloader->labels) {
-		fprintf(stderr, "Failed to allocate memory for labels\n");
-		exit(EXIT_FAILURE);
-	}
+	if (!dataloader->labels) DIE("malloc labels");
 
 	dataloader->length = num_samples;
 	dataloader->num_features = num_features;
@@ -126,20 +129,18 @@ int initialize_dataloader(pDataLoader dataloader, size_t num_samples, size_t num
 	return EXIT_SUCCESS;
 }
 
-void train(pDataLoader data, size_t epochs) {
+void train(pDataLoader data, pTrainingConfig cfg) {
 	pRegressionParameters params = initialize_params(data->num_features);
 	pTrainingDiagnostics diagnostics = calloc(1, sizeof(TrainingDiagnostics));
+	if (!diagnostics) DIE("calloc pTrainingDiagnostics");
 	
 	// Allocate memory for weighted errors array
 	diagnostics->weighted_err = calloc(data->num_features, sizeof(float));
-	if (!diagnostics->weighted_err) {
-		fprintf(stderr, "Failed to allocate memory for weighted errors\n");
-		exit(EXIT_FAILURE);
-	}
+	if (!diagnostics->weighted_err) DIE("calloc weighted errors array");
 
-	for (size_t i = 0; i < epochs; i++) {
+	for (size_t i = 0; i < cfg->epochs; i++) {
 		forward_pass(data, params, diagnostics);
-		backward_pass(data, params, diagnostics);
+		backward_pass(data, params, diagnostics, cfg->learning_rate);
 		printf("epoch: %zu - mse: %e\n", i+1, diagnostics->mse);
 		printf("weights: ");
 		for (size_t j = 0; j < data->num_features; j++) {
